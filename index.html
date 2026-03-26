@@ -179,6 +179,10 @@ h3{font-size:15px;font-weight:700;margin-bottom:5px;color:var(--text);}
 /* AI feedback CSS verwijderd */
 .ai-pattern-badge{display:inline-block;background:var(--p100);color:var(--p600);font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;margin-bottom:10px;}
 .actie-optie:hover{border-color:var(--p600) !important;color:var(--p600) !important;}
+.testmodus-banner{position:fixed;top:0;left:0;right:0;z-index:9999;background:#e8832a;color:#fff;padding:8px 20px;display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,0.2);}
+.testmodus-banner button{background:rgba(255,255,255,0.25);border:1px solid rgba(255,255,255,0.4);color:#fff;padding:5px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;}
+.testmodus-banner button:hover{background:rgba(255,255,255,0.35);}
+body.testmodus .main-content{margin-top:40px;}
 .tevreden-ster{font-size:28px;cursor:pointer;transition:transform 0.1s;user-select:none;line-height:1;}
 .tevreden-ster:hover{transform:scale(1.2);}
 .rol-btn{flex:1;padding:12px;border-radius:8px;border:2px solid var(--border);background:#fff;cursor:pointer;text-align:center;font-size:13px;font-weight:700;color:var(--muted);transition:all 0.15s;}
@@ -201,6 +205,11 @@ h3{font-size:15px;font-weight:700;margin-bottom:5px;color:var(--text);}
 <body>
 <div class="toast" id="toast"></div>
 <!-- AUTH SCHERMEN -->
+<div id="test-modus-balk" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#e8832a;color:#fff;padding:10px 20px;display:none;align-items:center;justify-content:space-between;font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,0.2);">
+  <span>⚠ Testmodus actief — je bekijkt de leerlinginterface als beheerder</span>
+  <button onclick="stopTestModus()" style="background:#fff;color:#e8832a;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;">← Terug naar beheer</button>
+</div>
+
 <div class="screen active" id="s-auth-login">
 <div class="auth-fullscreen">
   <div class="auth-left">
@@ -519,6 +528,7 @@ h3{font-size:15px;font-weight:700;margin-bottom:5px;color:var(--text);}
   </div>
   <div class="sidebar-section">
     <div class="sidebar-nav-item" onclick="renderDHome();showScreen('d-home');"><div class="nav-dot"></div>← Docent dashboard</div>
+    <div class="sidebar-nav-item" onclick="startTestModus();" style="color:#e8832a;font-weight:600;"><div class="nav-dot" style="background:#e8832a;"></div>🔍 Test als leerling</div>
   </div>
   <div class="sidebar-logout" onclick="uitloggen()">&#x2192; Uitloggen</div>
 </div>
@@ -2052,6 +2062,97 @@ function aTab(name) {
   if (name==='export') renderAdminExport();
 }
 
+function startTestModus() {
+  // Sla huidige staat op
+  S._adminState = {
+    profiel: JSON.parse(JSON.stringify(S.profiel)),
+    toetsen: [...S.toetsen],
+    resultaten: [...S.resultaten],
+  };
+  S.testModus = true;
+  // Zet tijdelijk leerlingprofiel
+  S.profiel = {
+    id: S.profiel.id,
+    naam: S.profiel.naam + ' (test)',
+    klas: S.klassen.length ? S.klassen[0].naam : 'Testklas',
+    rol: 'leerling',
+    email: S.profiel.email,
+  };
+  // Laad alle beschikbare toetsen als leerling
+  S.toetsen = _alleToetsen.filter(t => !t.gesloten);
+  S.resultaten = [];
+  // Toon banner
+  document.getElementById('testmodus-banner').style.display = 'flex';
+  document.body.classList.add('testmodus');
+  // Update leerling sidebar user info
+  const nm = S.profiel.naam;
+  const kl = S.profiel.klas;
+  document.querySelectorAll('#sidebar-user-ll').forEach(el => {
+    el.innerHTML = '<div class="sidebar-user"><div class="sidebar-user-avatar">T</div><div><div class="sidebar-user-name">'+nm+'</div><div class="sidebar-user-role">Testmodus · '+kl+'</div></div></div>';
+  });
+  const groeiBtn = document.getElementById('snav-groei-l');
+  if(groeiBtn) groeiBtn.style.display = 'block';
+  renderLHome();
+  showScreen('l-home');
+}
+
+function stopTestModus() {
+  if (!S._adminState) return;
+  // Herstel admin staat
+  S.profiel = S._adminState.profiel;
+  S.toetsen = S._adminState.toetsen;
+  S.resultaten = S._adminState.resultaten;
+  S.testModus = false;
+  S._adminState = null;
+  // Verberg banner
+  document.getElementById('testmodus-banner').style.display = 'none';
+  document.body.classList.remove('testmodus');
+  // Terug naar admin
+  renderAdmin();
+  showScreen('admin');
+  aTab('gebruikers');
+}
+
+function startTestModus() {
+  // Sla beheerderstoestand op
+  S._adminBackup = {
+    profiel: {...S.profiel},
+    toetsen: [...S.toetsen],
+    resultaten: [...S.resultaten]
+  };
+  // Simuleer leerlingprofiel
+  S.profiel = {
+    ...S.profiel,
+    rol: 'leerling',
+    naam: S.profiel.naam + ' (testmodus)',
+    klas: null,
+    _testModus: true
+  };
+  S.toetsen = S._adminBackup.toetsen.filter(t => !t.gesloten);
+  S.resultaten = [];
+  // Toon testbalk
+  document.getElementById('test-modus-balk').style.display = 'flex';
+  document.querySelectorAll('.sidebar').forEach(s => s.style.paddingTop = '46px');
+  document.querySelectorAll('.content-topbar').forEach(c => c.style.marginTop = '46px');
+  renderLHome();
+  showScreen('l-home');
+  renderNav();
+}
+
+function stopTestModus() {
+  if (!S._adminBackup) return;
+  S.profiel = S._adminBackup.profiel;
+  S.toetsen = S._adminBackup.toetsen;
+  S.resultaten = S._adminBackup.resultaten;
+  S._adminBackup = null;
+  document.getElementById('test-modus-balk').style.display = 'none';
+  document.querySelectorAll('.sidebar').forEach(s => s.style.paddingTop = '');
+  document.querySelectorAll('.content-topbar').forEach(c => c.style.marginTop = '');
+  renderAdmin();
+  showScreen('admin');
+  renderNav();
+}
+
 async function renderAdmin() {
   const { data: gebruikers } = await sb.from('profielen').select('*').order('aangemaakt_op', {ascending: false});
   _alleGebruikers = gebruikers || [];
@@ -2073,6 +2174,7 @@ function renderAdminGebruikers() {
   const beheerders = _alleGebruikers.filter(g => g.rol === 'beheerder').length;
 
   let rows = _alleGebruikers.map(g => {
+    const isSuperAdmin = g.email === 'bbe@hetstreek.nl';
     const rolOpts = ['leerling','docent','beheerder'].map(r =>
       '<option value="'+r+'"'+(g.rol===r?' selected':'')+'>'+r+'</option>'
     ).join('');
