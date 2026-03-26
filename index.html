@@ -367,7 +367,7 @@ h3{font-size:15px;font-weight:700;margin-bottom:5px;color:var(--text);}
   <div class="sidebar-section">
     <div class="sidebar-section-label">Leerling</div>
     <div class="sidebar-nav-item active"><div class="nav-dot"></div>Mijn toetsen</div>
-    <div class="sidebar-nav-item" id="snav-groei-l" style="display:none;" onclick="renderGroei();showScreen('l-groei');"><div class="nav-dot"></div>Groeidocument</div>
+    <div class="sidebar-nav-item" id="snav-groei-l" onclick="renderGroei();showScreen('l-groei');"><div class="nav-dot"></div>Mijn groeidocument</div>
   </div>
   <div id="sidebar-user-ll"></div>
   <div class="sidebar-logout" onclick="uitloggen()">&#x2192; Uitloggen</div>
@@ -1229,7 +1229,7 @@ function renderDoverzicht() {
     +'<div class="g2"><div class="card"><div class="card-title">Bloom</div>'
     +bloomGem.map(b=>'<div style="margin-bottom:10px;"><div class="row-sb" style="margin-bottom:3px;"><span style="font-size:13px;color:#666;">'+b.name+'</span><span style="font-weight:600;">'+b.gem+'%</span></div><div class="bbg"><div class="bbar" style="width:'+b.gem+'%;background:'+b.bar+';"></div></div></div>').join('')
     +'</div><div class="card"><div class="card-title">Leerlingen</div>'
-    +(filtered.length?filtered.map(r=>'<div class="ll-row" data-action="show-ll-detail" data-id="'+r.id+'">'
+    +(filtered.length?filtered.map(r=>'<div class="ll-row" data-action="open-groei-ll" data-id="'+r.leerling_id+'">'
       +'<div class="avatar">'+ini(r.leerling_naam)+'</div>'
       +'<div style="flex:1;"><p style="font-weight:600;font-size:13px;">'+r.leerling_naam+'</p><p style="font-size:11px;color:#999;">'+r.leerling_klas+'</p></div>'
       +'<div style="text-align:right;"><span style="font-size:18px;font-weight:700;color:'+(r.data.cijfer>=5.5?'var(--green)':'var(--red)')+';">'+r.data.cijfer+'</span><br><span style="font-size:11px;color:#888;">cijfer</span></div>'
@@ -1363,6 +1363,48 @@ function renderLeerlingen() {
   });
   html+='</tbody></table></div></div>';
   el.innerHTML=html;
+}
+
+function showGroeiLL(leerlingId) {
+  // Toon groeidocument van een specifieke leerling vanuit docentoverzicht
+  const resultaten = S.resultaten.filter(r=>r.leerling_id===leerlingId);
+  const eersteRes = resultaten[0];
+  const naam = eersteRes?.leerling_naam || 'Leerling';
+  const klas = eersteRes?.leerling_klas || eersteRes?.klas || '';
+  const ll = {naam, klas};
+
+  if(!resultaten.length){
+    const el=document.getElementById('d-ll-body');
+    if(el) el.innerHTML='<div class="card"><p class="muted">'+naam+' heeft nog geen toetsen ingevuld.</p><button class="btn" id="groei-ll-back-empty">← Terug</button></div>';
+    document.getElementById('groei-ll-back-empty').onclick=()=>{dTab('overzicht');showScreen('d-home');};
+    showScreen('d-ll-detail'); return;
+  }
+  const mine=resultaten.sort((a,b)=>+new Date(a.aangemaakt_op)-+new Date(b.aangemaakt_op));
+  const gemC=Math.round(mine.reduce((s,r)=>s+(r.data?.cijfer||0),0)/mine.length*10)/10;
+  // Bloom gemiddelden
+  const bAcc={};
+  mine.forEach(r=>{(r.data?.bloom_scores||[]).forEach(b=>{if(!bAcc[b.niveau])bAcc[b.niveau]={naam:b.naam||('Niveau '+b.niveau),tot:0,n:0};bAcc[b.niveau].tot+=b.pct;bAcc[b.niveau].n+=1;});});
+  const bArr=Object.entries(bAcc).sort((a,b)=>+a[0]-+b[0]).map(([niv,d])=>({naam:d.naam,pct:Math.round(d.tot/d.n)}));
+  const bloomBars=bArr.map(b=>{const k=b.pct>=70?'var(--green)':b.pct>=55?'var(--orange)':'var(--red)';return '<div style="margin-bottom:10px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-size:13px;font-weight:600;">'+b.naam+'</span><span style="font-size:13px;font-weight:700;color:'+k+';">'+b.pct+'%</span></div><div class="bbg"><div class="bbar" style="width:'+b.pct+'%;background:'+k+';"></div></div></div>';}).join('');
+  const el=document.getElementById('d-ll-body');
+  el.innerHTML='<div class="row-sb" style="margin-bottom:20px;"><div><h2 style="margin-bottom:2px;">'+naam+'</h2><p class="muted">'+klas+' · Groeidocument</p></div><button class="btn" id="ll-back-btn">← Terug</button></div>'
+    +'<div class="g3" style="margin-bottom:20px;">'
+    +'<div class="metric"><div class="metric-val">'+mine.length+'</div><div class="metric-lbl">Toetsen</div></div>'
+    +'<div class="metric"><div class="metric-val" style="color:'+(gemC>=5.5?'var(--green)':'var(--red)')+';">'+gemC+'</div><div class="metric-lbl">Gem. cijfer</div></div>'
+    +'</div>'
+    +(bArr.length?'<div class="card" style="margin-bottom:20px;"><div class="card-title">Gemiddelde per Bloom-niveau</div>'+bloomBars+'</div>':'')
+    +'<h2 style="margin-bottom:14px;">Alle toetsen</h2>'
+    +mine.map(r=>'<div class="card" style="margin-bottom:12px;">'
+      +'<div class="row-sb" style="margin-bottom:8px;"><div><h3 style="margin-bottom:2px;">'+(r.data?.toets_naam||r.toets_naam||'Toets')+'</h3><p class="muted">'+r.datum+'</p></div>'
+      +'<div style="text-align:right;"><div style="font-size:28px;font-weight:700;color:'+((r.data?.totaal_pct||0)>=55?'var(--green)':'var(--red)')+';">'+(r.data?.totaal_pct||0)+'%</div><p style="font-size:12px;color:var(--muted);">Cijfer: '+(r.data?.cijfer||'-')+'</p></div></div>'
+      +(r.data?.groeidoel?'<div class="acbox" style="border-left-color:var(--p600);margin-top:8px;"><p style="font-size:13px;line-height:1.6;">'+r.data.groeidoel+'</p></div>':'')
+      +(r.data?.topTips?.top?'<div style="margin-top:8px;display:flex;gap:8px;align-items:flex-start;"><span class="top-badge" style="flex-shrink:0;">Top</span><p style="font-size:13px;line-height:1.5;">'+r.data.topTips.top+'</p></div>':'')
+      +(r.data?.topTips?.tip1?'<div style="display:flex;gap:8px;align-items:flex-start;margin-top:6px;"><span class="tip-badge" style="flex-shrink:0;">Tip</span><p style="font-size:13px;line-height:1.5;">'+r.data.topTips.tip1+'</p></div>':'')
+      +'</div>').join('')
+    +'<button class="btn" id="ll-back-btn2" style="margin-top:8px;">← Terug</button>';
+  document.getElementById('ll-back-btn').onclick=()=>{dTab('overzicht');showScreen('d-home');};
+  document.getElementById('ll-back-btn2').onclick=()=>{dTab('overzicht');showScreen('d-home');};
+  showScreen('d-ll-detail');
 }
 
 async function showLLDetail(id) {
@@ -1543,15 +1585,9 @@ function startInv(toetsId) {
   document.querySelectorAll('.methode-btn').forEach(b=>b.classList.remove('sel'));
   document.getElementById('tt-top').style.borderColor='';
   document.getElementById('tt-top-err').style.display='none';
-  if(!tip1Val){
-    document.getElementById('tt-tip1').style.borderColor='var(--red)';
-    document.getElementById('tt-tip1-err').style.display='block';
-    document.getElementById('tt-tip1').scrollIntoView({behavior:'smooth',block:'center'});
-    btn.disabled=false; btn.textContent='Analyseer & Sla op'; return;
-  }
   document.getElementById('tt-tip1').style.borderColor='';
-  document.getElementById('tt-tip1-err').style.display='none';
-  ['tt-top','tt-tip1'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); document.getElementById('tt-tip1-err')?.style && (document.getElementById('tt-tip1-err').style.display='none');
+  if(document.getElementById('tt-tip1-err'))document.getElementById('tt-tip1-err').style.display='none';
+  ['tt-top','tt-tip1'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('inv-h1').textContent=S.temp.activeToets.naam;
   document.getElementById('inv-sub').textContent=S.temp.activeToets.datum;
   renderInv();
@@ -2351,6 +2387,7 @@ document.addEventListener('click',function(e){
   else if(action==='del-toets')delToets(id);
   else if(action==='toggle-gesloten')toggleGesloten(id);
   else if(action==='show-ll-detail')showLLDetail(id);
+  else if(action==='open-groei-ll')showGroeiLL(id);
   else if(action==='start-inv')startInv(id);
   else if(action==='open-res')openRes(id);
 });
