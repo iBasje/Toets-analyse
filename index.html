@@ -176,19 +176,9 @@ h3{font-size:15px;font-weight:700;margin-bottom:5px;color:var(--text);}
 .ll-row{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.1s;}
 .ll-row:hover{background:var(--p050);margin:0 -8px;padding:11px 8px;}
 .ll-row:last-child{border-bottom:none;}
-.ai-feedback-block{background:linear-gradient(135deg,var(--p050),#faf0ff);border:1px solid #d8cce8;border-radius:var(--radius);padding:18px;margin-bottom:14px;}
-.ai-feedback-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
-.ai-icon{width:32px;height:32px;background:var(--p600);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
-.ai-feedback-title{font-size:15px;font-weight:700;color:var(--p600);}
-.ai-feedback-subtitle{font-size:12px;color:var(--muted);margin-top:1px;}
-.ai-item{background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;}
-.ai-item:last-child{margin-bottom:0;}
-.ai-loading{display:flex;align-items:center;gap:10px;padding:14px;color:var(--muted);font-size:13px;}
-.ai-dot{width:8px;height:8px;border-radius:50%;background:var(--p600);animation:aipulse 1.2s ease-in-out infinite;}
-.ai-dot:nth-child(2){animation-delay:0.2s;} .ai-dot:nth-child(3){animation-delay:0.4s;}
-@keyframes aipulse{0%,80%,100%{transform:scale(0.6);opacity:0.4;}40%{transform:scale(1);opacity:1;}}
-.ai-error{background:#fde8e8;border:1px solid #f0b0b0;border-radius:8px;padding:10px 14px;font-size:13px;color:var(--red);}
+/* AI feedback CSS verwijderd */
 .ai-pattern-badge{display:inline-block;background:var(--p100);color:var(--p600);font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;margin-bottom:10px;}
+.actie-optie:hover{border-color:var(--p600) !important;color:var(--p600) !important;}
 .tevreden-ster{font-size:28px;cursor:pointer;transition:transform 0.1s;user-select:none;line-height:1;}
 .tevreden-ster:hover{transform:scale(1.2);}
 .rol-btn{flex:1;padding:12px;border-radius:8px;border:2px solid var(--border);background:#fff;cursor:pointer;text-align:center;font-size:13px;font-weight:700;color:var(--muted);transition:all 0.15s;}
@@ -327,13 +317,28 @@ h3{font-size:15px;font-weight:700;margin-bottom:5px;color:var(--text);}
 </div>
 
 <div class="screen" id="s-d-upload">
-<h1 id="upload-title" style="margin-bottom:5px;">Nieuwe toets</h1>
+<div class="app-layout">
+<div class="sidebar" style="background:var(--p700);">
+  <div class="sidebar-logo">
+    <img class="sidebar-logo-img" src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCADFAOQDASIAAhEBAxEB/8QAHQABAQADAQEBAQEAAAAAAAAAAAYDBwgEBQECCf/EAFoQAAAEBAICCA8LCQYFBQAAAAABAgMEBQYRBxIhMQgTFzY3QXOyFCJRVmZxdHWBlaSxwtLiFRgjMlJVYXKRlNMWMzRCYoSTobMkRmWCksMlJkOjtFPB0eHw/8QAGwEBAAIDAQEAAAAAAAAAAAAAAAIHAwQFAQb/xAA3EQABAwAFCQcEAgIDAAAAAAABAAIDBBESNLEFBhMhMVFxgcEUMjM1QVJyImGC0ZHhQqEjU/D/2gAMAwEAAhEDEQA/APHi/WtZQOKFRwcFVs/hYZmPcQ0yzMXkIQkj0ESSVYi+ghK7oFede1S+NX/WHsxt4W6o75O+cRw+yhiZo26hsC6rGiyNSpd0CvOvapfGr/rBugV517VL41f9YTQDJome0KVkblS7oFede1S+NX/WDdArzr2qXxq/6wmgDRM9oSyNypd0CvOvapfGr/rBugV517VL41f9YTQBome0JZG5Uu6BXnXtUvjV/wBYN0CvOvapfGr/AKwmgDRM9oSyNypd0CvOvapfGr/rBugV517VL41f9YTQBome0JZG5Uu6BXnXtUvjV/1g3QK869ql8av+sJoA0TPaEsjcqXdArzr2qXxq/wCsG6BXnXtUvjV/1hNAGiZ7QlkblS7oFede1S+NX/WDdArzr2qXxq/6wmgDRM9oSyNypd0CvOvapfGr/rBugV517VL41f8AWE0AaJntCWRuVLugV517VL41f9YN0CvOvapfGr/rCaANEz2hLI3Kl3QK869ql8av+sG6BXnXtUvjV/1hNAGiZ7QlkblXQFfV0on81aVGdm7leaPaOmT+0P7/AC9rnrzqPxo96wmJdqiOS9NIyCu85yWU6purUFa+ZlFgkydW9gJtHaB9lt+gauquJkC3Ymp508sopaczke6o7ZEaLmrVpP7R9/8AKapOuCbffHP/AJELhxvcc7sXzGxSCqMqUmZtLeA8+nqdwXlNosAneAwbdwXSGHMQ/FUVLIiKfdfeW0ZrccWalKPMesz0mAx4X7wpTyR85QC2cnEmiRE+1uAVOU4AUqQD3HFcXY28LdUd8nfOI4WONvC3VHfJ3ziOFgweG3gFuM7oQAAZVJAAARAAARAAARAAARAAARAAARAAARAAARAAARAAAReqXaojkvTSMgxy7VEcl6aRkFbZ1X/kOqt7Mjyz8j0WxMON7jndi+Y2KQTeHG9xzuxfMbFIKiytfH8sAo068P4rozC/eFKeSPnKAML94Up5I+coBb+TbnF8W4BUtT71L8jiVxdjbwt1R3yd84jhY428LdUd8nfOI4WFB4beAW2zuhAABlUkAABEAABEAABEAABEAABEAABEAABEAABEAB/TaFuOJbbSalqMiSkiuZmfECL+QFpjJBSyUVeinpZDwrZSeCYgop6HSZFExKUEbrh30medRl/lEWIMfbaHb14DWK16pdqiOS9NIyDHLtURyXppGQVznVf+Q6q38yPLPyPRbEw43uOd2L5jYpBN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" alt="logo" id="upload-sidebar-logo"/>
+    <div><div class="sidebar-logo-name">Het Streek</div></div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-nav-item" onclick="S.temp.editId=null;renderDHome();showScreen('d-home');"><div class="nav-dot"></div>← Terug</div>
+  </div>
+</div>
+<div class="main-content">
+<div class="content-topbar"><div class="content-topbar-title" id="upload-title">Nieuwe toets</div></div>
+<div class="content-body"><div style="max-width:860px;margin:0 auto;">
 
 <div class="card"><div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;"><div><label>Naam van de toets</label><input type="text" id="inp-tnaam" placeholder="bijv. SO 1.1 en 1.2"></div><div><label>Klas</label><select id="inp-tklas"><option value="">-- Kies klas --</option></select></div></div><div class="g2" style="margin-top:12px;"><div><label>Zakgrens (%)</label><input type="number" id="inp-zakgrens" min="1" max="100" value="55" style="max-width:120px;"> <span class="muted" style="font-size:12px;">Standaard: 55% = cijfer 5,5</span></div></div></div>
 <div id="vraag-lijst"></div>
 <button class="btn btn-blue" id="btn-add-vraag" style="width:100%;margin-bottom:14px;justify-content:center;">+ Vraag toevoegen</button>
 <div class="totaal-bar" id="totaal-bar" style="display:none;"><span style="font-size:13px;">Vragen: <strong id="tot-vragen">0</strong></span><span style="font-size:13px;">Punten: <strong id="tot-punten">0</strong></span><span id="tot-bloom-tags"></span></div>
 <div class="save-section"><div class="row" style="gap:10px;"><button class="btn btn-success" style="font-size:14px;padding:11px 22px;" id="btn-save-toets">&#10003; Toets opslaan</button><button class="btn" id="btn-cancel-upload">Annuleer</button><span id="save-err" style="color:#9b2424;font-size:12px;"></span></div></div>
+</div>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -1418,7 +1423,6 @@ async function showLLDetail(id) {
   const reflItems=(r.scores||[]).filter(v=>v.redenen&&v.redenen.length>0);
   const tt=d.topTips||{};
   const intHtml=buildIntBlok(d.interventieniveaus||{});
-  const aiFeedbackHTML=d.ai_feedback?buildAIFeedbackHTML(d.ai_feedback,false,false):(d.ai_feedback_error?buildAIFeedbackHTML(null,false,true):'');
   const el=document.getElementById('d-ll-body');
   el.innerHTML='<div class="row-sb" style="margin-bottom:16px;"><button class="btn" id="ll-back-btn">← Terug</button></div>'
     +'<div class="row-sb" style="margin-bottom:20px;flex-wrap:wrap;gap:12px;">'
@@ -1427,7 +1431,6 @@ async function showLLDetail(id) {
     +'</div>'
     +'<div class="card"><div class="card-title">Score per Bloom-niveau</div>'+bars+'</div>'
     +intHtml
-    +aiFeedbackHTML
     +(reflItems.length?'<div class="card"><div class="card-title">Reflectie per vraag</div><table><thead><tr><th>Vraag</th><th>Type</th><th>Score</th><th>Redenen</th></tr></thead><tbody>'
       +reflItems.map(v=>'<tr><td style="color:#999;">'+v.label+'</td><td><span class="vbadge">'+v.vraagtype+'</span></td><td>'+v.behaald+'/'+v.max+'</td><td>'+v.redenen.map(r=>'<span class="tag">'+r+'</span>').join('')+'</td></tr>').join('')
       +'</tbody></table></div>':'')
@@ -1518,15 +1521,7 @@ Regels: jij-vorm, concreet, max 3 zinnen per niveau + 3 acties, B1-taalniveau, a
   return JSON.parse(clean);
 }
 
-function buildAIFeedbackHTML(aiFeedback,loading,error) {
-  if(loading){return'<div class="ai-feedback-block"><div class="ai-feedback-header"><div class="ai-icon">✦</div><div><div class="ai-feedback-title">Persoonlijke AI-feedback</div><div class="ai-feedback-subtitle">Wordt gegenereerd...</div></div></div><div class="ai-loading"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div><span>Bezig met analyseren...</span></div></div>';}
-  if(error){return'<div class="ai-feedback-block"><div class="ai-feedback-header"><div class="ai-icon">✦</div><div><div class="ai-feedback-title">Persoonlijke AI-feedback</div></div></div><div class="ai-error">Feedback kon niet worden geladen.</div></div>';}
-  if(!aiFeedback)return'';
-  const nc={1:'#f0d080',2:'#f0b090',3:'#e0a0a0'};
-  const ntx={1:'var(--orange)',2:'#6b2010',3:'#6b1414'};
-  const niveausHTML=(aiFeedback.niveaus||[]).map(n=>`<div class="ai-item"><div class="ai-item-label" style="color:${ntx[n.niveau]||'var(--p600)'};"><span style="background:${nc[n.niveau]||'#e0e0f0'};padding:2px 8px;border-radius:10px;">Niveau ${n.niveau}: ${n.label}</span></div><div class="ai-item-text"><p>${n.feedback}</p>${n.acties&&n.acties.length?'<ul style="margin-left:16px;margin-top:6px;">'+n.acties.map(a=>`<li style="font-size:13px;line-height:1.6;margin-bottom:3px;">${a}</li>`).join('')+'</ul>':''}</div></div>`).join('');
-  return`<div class="ai-feedback-block"><div class="ai-feedback-header"><div class="ai-icon">✦</div><div><div class="ai-feedback-title">Persoonlijke AI-feedback</div><div class="ai-feedback-subtitle">Op basis van jouw foutenpatroon</div></div></div>${aiFeedback.patroon_inzicht?`<div style="margin-bottom:12px;"><span class="ai-pattern-badge">Jouw patroon</span><p style="font-size:13px;line-height:1.6;color:#333;margin-top:6px;">${aiFeedback.patroon_inzicht}</p></div>`:''} ${niveausHTML}${aiFeedback.motivatie?`<div style="margin-top:12px;padding-top:12px;border-top:1px solid #d0d8f0;font-size:13px;color:#4a35b0;font-style:italic;">✦ ${aiFeedback.motivatie}</div>`:''}</div>`;
-}
+// AI feedback verwijderd
 
 // ===================== LEERLING =====================
 function renderLHome() {
@@ -1756,7 +1751,11 @@ function renderActies(itemId) {
   const geselecteerd=S.temp.reflecties[itemId].acties||[];
   actieOpties.innerHTML=alleActies.map(a=>{
     const isSel=geselecteerd.includes(a);
-    return '<div class="actie-optie'+(isSel?' actie-sel':'')+'" data-actie="'+a.replace(/"/g,'&quot;')+'" data-item="'+itemId+'" style="padding:8px 12px;border-radius:8px;border:1.5px solid '+(isSel?'var(--p600)':'var(--border)'+';background:'+(isSel?'var(--p600)':'#f8f9fc'))+';cursor:pointer;font-size:13px;margin-bottom:6px;color:'+(isSel?'#fff':'var(--text)')+';">'+( isSel?'✓ ':'')+a+'</div>';
+    const bg=isSel?'var(--p600)':'#fff';
+    const clr=isSel?'#fff':'var(--text)';
+    const brd=isSel?'var(--p600)':'var(--border)';
+    const chk=isSel?'✓ ':'';
+    return '<div class="actie-optie" data-actie="'+a.replace(/"/g,'&quot;')+'" data-item="'+itemId+'" style="padding:10px 14px;border-radius:8px;border:1.5px solid '+brd+';background:'+bg+';cursor:pointer;font-size:13px;margin-bottom:8px;color:'+clr+';font-weight:'+(isSel?'600':'400')+';transition:all 0.15s;">'+chk+a+'</div>';
   }).join('');
   actieOpties.querySelectorAll('.actie-optie').forEach(el=>{
     el.addEventListener('click',function(){
@@ -1819,6 +1818,50 @@ async function calcAnalyse() {
     document.getElementById('tijd-btns').scrollIntoView({behavior:'smooth',block:'center'});
     return;
   }
+  // Studiemethode verplicht
+  if(!S.temp.studiemethoden||!S.temp.studiemethoden.length){
+    toast('Selecteer hoe je hebt geleerd.');
+    document.getElementById('methode-btns')?.scrollIntoView({behavior:'smooth',block:'center'});
+    return;
+  }
+  // Attributievraag verplicht
+  if(!S.temp.attributie){
+    toast('Geef aan waardoor je dit resultaat hebt gehaald.');
+    document.getElementById('attributie-btns')?.scrollIntoView({behavior:'smooth',block:'center'});
+    return;
+  }
+  // Als er een vorige toets is: tevredenheid + groeidoel-evaluatie verplicht
+  const vorigeResCheck=S.resultaten.sort((a,b)=>+new Date(b.aangemaakt_op)-+new Date(a.aangemaakt_op))[0];
+  if(vorigeResCheck){
+    if(!S.temp.tevredenheid){
+      toast('Geef aan hoe tevreden je bent met je vorige resultaat.');
+      document.getElementById('tevreden-sterren')?.scrollIntoView({behavior:'smooth',block:'center'});
+      return;
+    }
+    if(document.getElementById('voornemen-banner')?.style.display!=='none' && !S.temp.groeidoelCheck){
+      toast('Geef aan of je je groeidoel hebt gehaald.');
+      document.getElementById('voornemen-banner')?.scrollIntoView({behavior:'smooth',block:'center'});
+      return;
+    }
+  }
+  // Foutreden + actie verplicht bij vragen met puntenaftrek
+  const itemsCheck=getScoreItemsFromToets(t);
+  for(const item of itemsCheck){
+    const sc=S.temp.scores[item.id]||0;
+    if(sc<(item.max||1)){
+      const ref=S.temp.reflecties[item.id]||{};
+      if(!ref.redenen||!ref.redenen.length){
+        toast('Vraag '+item.label+': geef aan waarom je punten miste.');
+        document.getElementById('ref-'+item.id)?.scrollIntoView({behavior:'smooth',block:'center'});
+        return;
+      }
+      if(!ref.acties||!ref.acties.length){
+        toast('Vraag '+item.label+': kies minstens 1 actie om dit te verbeteren.');
+        document.getElementById('actie-'+item.id)?.scrollIntoView({behavior:'smooth',block:'center'});
+        return;
+      }
+    }
+  }
   const topVal=document.getElementById('tt-top').value.trim();
   const tip1Val=document.getElementById('tt-tip1').value.trim();
   if(!topVal){
@@ -1878,7 +1921,7 @@ async function calcAnalyse() {
     attributie:S.temp.attributie,
     groeidoel_check:S.temp.groeidoelCheck,
     groeidoel_check_toelichting:(document.getElementById('groeidoel-check-toelichting')?.value||'').trim(),
-    toets_naam:t.naam,ai_feedback:null,ai_feedback_error:false};
+    toets_naam:t.naam};
 
   const btn=document.getElementById('btn-analyseer');
   btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Opslaan...';
@@ -1897,30 +1940,19 @@ async function calcAnalyse() {
   const idx=S.resultaten.findIndex(r=>r.toets_id===t.id);
   if(idx>=0)S.resultaten[idx]=resultaat; else S.resultaten.push(resultaat);
 
-  renderAna(resultaat,true);
+  renderAna(resultaat);
   renderNav();
   showScreen('l-ana');
 
-  // AI feedback asynchroon
-  try {
-    const aiFeedback=await fetchAIFeedback(resultaat);
-    resultaat.data.ai_feedback=aiFeedback;
-    await sb.from('resultaten').update({data:resultaat.data}).eq('id',saved.id);
-    const aiContainer=document.getElementById('ai-feedback-container');
-    if(aiContainer)aiContainer.innerHTML=buildAIFeedbackHTML(aiFeedback,false,false);
-  } catch(e){
-    resultaat.data.ai_feedback_error=true;
-    const aiContainer=document.getElementById('ai-feedback-container');
-    if(aiContainer)aiContainer.innerHTML=buildAIFeedbackHTML(null,false,true);
-  }
+
 }
 
 function openRes(id) {
   const r=S.resultaten.find(x=>x.id===id); if(!r)return;
-  renderAna(r,false); showScreen('l-ana');
+  renderAna(r); showScreen('l-ana');
 }
 
-function renderAna(r,aiLoading) {
+function renderAna(r) {
   const d=r.data;
   const pc=d.totaal_pct>=55?'var(--green)':'var(--red)';
   const bars=(d.bloom_scores||[]).map(b=>{
@@ -1936,13 +1968,7 @@ function renderAna(r,aiLoading) {
     ?'<div class="card"><div class="card-title">Cijferimpact</div><p style="font-size:13px;color:#888;margin-bottom:10px;">Jouw cijfer: <strong style="font-size:16px;color:'+(d.cijfer>=5.5?'var(--green)':'var(--red)')+';">'+d.cijfer+'</strong></p>'
       +d.cijferImpact.slice(0,8).map(ci=>'<div class="row-sb" style="margin-bottom:5px;font-size:12px;"><span>Vraag '+ci.label+' ('+ci.gemist+' punt'+(ci.gemist>1?'en':'')+' gemist)</span><span style="color:#c84020;font-weight:600;">- '+ci.impact+' op je cijfer</span></div>').join('')
       +'</div>':'';
-  let aiFeedbackHTML=aiLoading
-    ?'<div id="ai-feedback-container">'+buildAIFeedbackHTML(null,true,false)+'</div>'
-    :d.ai_feedback
-      ?'<div id="ai-feedback-container">'+buildAIFeedbackHTML(d.ai_feedback,false,false)+'</div>'
-      :d.ai_feedback_error
-        ?'<div id="ai-feedback-container">'+buildAIFeedbackHTML(null,false,true)+'</div>'
-        :'<div id="ai-feedback-container"></div>';
+
   const el=document.getElementById('ana-body');
   el.innerHTML='<div class="row-sb" style="margin-bottom:20px;flex-wrap:wrap;gap:12px;">'
     +'<div><h1 style="margin-bottom:5px;">Jouw analyse</h1><p class="muted">'+r.toets_naam+' · '+r.datum+(d.tijdsinv?' · Geleerd: '+d.tijdsinv+' uur':'')+'</p></div>'
@@ -1954,7 +1980,6 @@ function renderAna(r,aiLoading) {
     +'<div class="g2" style="margin-bottom:14px;"><div class="card"><div class="card-title" style="color:#2a6020;">Sterke punten</div>'+(sterk||'<p class="muted">-</p>')+'</div><div class="card"><div class="card-title" style="color:#9b2424;">Verbeterpunten</div>'+(verb||'<p class="muted">-</p>')+'</div></div>'
     +impactHtml
     +buildIntBlok(d.interventieniveaus||{})
-    +aiFeedbackHTML
     +(adv?'<div class="card"><div class="card-title">Oefenstrategieen per Bloom-niveau</div>'+adv+'</div>':'')
     +((topTips.top||topTips.tip1)?'<div class="card" style="border-color:#a8d090;"><div class="card-title" style="color:#2a6020;">Jouw top & tips</div>'
       +(topTips.top?'<div style="display:flex;gap:8px;margin-bottom:10px;align-items:flex-start;"><span class="top-badge" style="flex-shrink:0;">Top</span><p style="font-size:13px;line-height:1.5;">'+topTips.top+'</p></div>':'')
@@ -2054,7 +2079,7 @@ function renderAdminGebruikers() {
     return '<tr>'
       +'<td style="font-weight:600;">'+g.naam+'</td>'
       +'<td style="color:#888;font-size:12px;">'+g.email+'</td>'
-      +'<td>'+(g.klas||'-')+'</td>'
+      +'<td>'+(isSuperAdmin?'<span style="font-size:12px;color:var(--muted);">'+(g.klas||'-')+'</span>':'<select class="rol-select" data-uid="'+g.id+'" onchange="wijzigKlas(this)" style="min-width:80px;"><option value="">— geen —</option>'+(S.klassen||[]).map(k=>'<option value="'+k.naam+'"'+(g.klas===k.naam?' selected':'')+'>'+k.naam+'</option>').join('')+'</select>')+'</td>'
       +'<td><select class="rol-select" data-uid="'+g.id+'" onchange="wijzigRol(this)">'+rolOpts+'</select></td>'
       +'<td><button class="btn btn-xs btn-danger" onclick="verwijderGebruiker(\''+g.id+'\',\''+g.naam.replace(/'/g,'')+'\')" '+(g.id===S.user.id?'disabled title="Kan jezelf niet verwijderen"':'')+'>Verwijder</button></td>'
       +'</tr>';
@@ -2095,6 +2120,16 @@ async function wijzigRol(select) {
   toast('Rol gewijzigd naar ' + nieuweRol);
 }
 
+async function wijzigKlas(select) {
+  const uid = select.dataset.uid;
+  const nieuweKlas = select.value;
+  const { error } = await sb.from('profielen').update({ klas: nieuweKlas || null }).eq('id', uid);
+  if (error) { toast('Fout: ' + error.message); return; }
+  const g = _alleGebruikers.find(x => x.id === uid);
+  if (g) g.klas = nieuweKlas || null;
+  toast('Klas bijgewerkt');
+}
+
 async function verwijderGebruiker(uid, naam) {
   const doelGebruiker = _alleGebruikers.find(x => x.id === uid);
   if (doelGebruiker && doelGebruiker.email === 'bbe@hetstreek.nl') {
@@ -2127,8 +2162,19 @@ function renderAdminToetsen() {
       +'</tr>';
   }).join('');
   el.innerHTML = '<div class="card"><div class="card-title">Alle toetsen ('+_alleToetsen.length+')</div>'
-    +'<div style="overflow-x:auto;"><table><thead><tr><th>Naam</th><th>Docent</th><th>Datum</th><th>Omvang</th><th>Resultaten</th><th>Status</th></tr></thead>'
+    +'<div style="overflow-x:auto;"><table><thead><tr><th>Naam</th><th>Docent</th><th>Datum</th><th>Omvang</th><th>Resultaten</th><th>Status</th><th>Actie</th></tr></thead>'
     +'<tbody>'+rows+'</tbody></table></div></div>';
+}
+
+async function verwijderAdminToets(toetsId, naam) {
+  if (!confirm('Toets "'+naam+'" en alle bijbehorende resultaten verwijderen? Dit kan niet ongedaan worden gemaakt.')) return;
+  await sb.from('resultaten').delete().eq('toets_id', toetsId);
+  const { error } = await sb.from('toetsen').delete().eq('id', toetsId);
+  if (error) { toast('Fout: ' + error.message); return; }
+  _alleToetsen = _alleToetsen.filter(t => t.id !== toetsId);
+  _alleResultaten = _alleResultaten.filter(r => r.toets_id !== toetsId);
+  toast(naam + ' verwijderd');
+  renderAdminToetsen();
 }
 
 function renderAdminExport() {
