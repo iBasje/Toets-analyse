@@ -722,41 +722,69 @@ async function init() {
 async function laadProfiel(user) {
   S.user = user;
   let profiel = null;
+  
+  console.log('Laden profiel voor user:', user.id, user.email);
+  
+  // Probeer profiel op te halen
   try {
     const { data, error } = await sb.from('profielen').select('*').eq('id', user.id).single();
-    if (!error) profiel = data;
-  } catch(e) {}
+    console.log('Profiel query result:', { data, error });
+    if (data && !error) {
+      profiel = data;
+    } else if (error) {
+      console.error('Error bij ophalen profiel:', error);
+    }
+  } catch(e) {
+    console.error('Exception bij ophalen profiel:', e);
+  }
 
-  // Als profiel nog niet bestaat, maak het aan
+  // Als profiel nog niet bestaat, probeer het aan te maken
   if (!profiel) {
+    console.log('Profiel niet gevonden, proberen aan te maken...');
     const meta = user.user_metadata || {};
     try {
-      const { data: nieuwProfiel } = await sb.from('profielen').upsert({
+      const { data: nieuwProfiel, error: upsertError } = await sb.from('profielen').upsert({
         id: user.id,
         email: user.email,
         naam: meta.naam || user.email.split('@')[0],
         rol: meta.rol || 'leerling',
         klas: meta.klas || null
       }, { onConflict: 'id' }).select().single();
-      profiel = nieuwProfiel;
-    } catch(e) {}
+      
+      console.log('Profiel aanmaken result:', { nieuwProfiel, upsertError });
+      
+      if (!upsertError && nieuwProfiel) {
+        profiel = nieuwProfiel;
+      }
+    } catch(e) {
+      console.error('Exception bij aanmaken profiel:', e);
+    }
   }
 
-  // Laatste poging: direct ophalen
+  // Laatste poging: opnieuw ophalen
   if (!profiel) {
+    console.log('Laatste poging: profiel opnieuw ophalen...');
     try {
-      const { data } = await sb.from('profielen').select('*').eq('id', user.id).single();
-      profiel = data;
-    } catch(e) {}
+      const { data, error } = await sb.from('profielen').select('*').eq('id', user.id).single();
+      console.log('Laatste poging result:', { data, error });
+      if (data) profiel = data;
+    } catch(e) {
+      console.error('Exception laatste poging:', e);
+    }
   }
 
+  // Als het profiel echt niet bestaat
   if (!profiel) {
-    alert('Fout bij laden profiel. Probeer opnieuw in te loggen.');
+    console.error('FOUT: Kon profiel niet laden of aanmaken voor', user.email);
+    alert('Je account bestaat nog niet in het systeem, of er is een beveiligingsprobleem.\n\nAls je een beheerder bent: check de browser console voor details.\n\nAls je een leerling bent: vraag een beheerder om je account aan te maken.\n\nJe wordt nu uitgelogd.');
     await sb.auth.signOut();
     return;
   }
+  
+  console.log('Profiel succesvol geladen:', profiel);
   S.profiel = profiel;
-    renderNav();
+  renderNav();
+  
   if (profiel.rol === 'beheerder' || profiel.rol === 'docent') {
     await laadDocentData();
     showScreen('d-home');
