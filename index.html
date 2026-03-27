@@ -1401,47 +1401,7 @@ function buildIntBlok(intNiveaus) {
 }
 
 // ===================== AI FEEDBACK =====================
-async function fetchAIFeedback(res) {
-  const d=res.data;
-  const foutItems=(res.scores||[]).filter(v=>v.behaald<v.max);
-  if(!foutItems.length)return null;
-  const intNiveaus=d.interventieniveaus||{};
-  if(!Object.values(intNiveaus).some(arr=>arr.length>0))return null;
-  const foutSummary=foutItems.map(v=>`- Vraag ${v.label} (${v.vraagtype}, Bloom: ${v.bloom_naam}): ${v.behaald}/${v.max} punten. Redenen: ${v.redenen&&v.redenen.length?v.redenen.join(', '):'geen aangegeven'}.`).join('\n');
-  const bloomSummary=(d.bloom_scores||[]).map(b=>`- ${b.naam}: ${b.pct}%`).join('\n');
-  const prompt=`Je bent een didactisch coach voor een leerling in de eerste klas van het voortgezet onderwijs die net een geschiedenistoets heeft ingevuld.
-
-Leerling: ${res.leerling_naam||res.leerling} (${res.leerling_klas||res.klas})
-Toets: ${res.toets_naam||res.toets}
-Totaalscore: ${d.totaal_pct}% (cijfer: ${d.cijfer})
-${d.tijdsinv?'Geleerd: '+d.tijdsinv+' uur':''}
-${d.studiemethoden&&d.studiemethoden.length?'Studiemethoden: '+d.studiemethoden.join(', '):''}
-
-Score per Bloom-niveau:\n${bloomSummary}
-
-Fouten:\n${foutSummary}
-
-Interventieniveaus:
-${(intNiveaus[1]||[]).length?'Niveau 1 (Stof herhalen): '+intNiveaus[1].join(', '):''}
-${(intNiveaus[2]||[]).length?'Niveau 2 (Vraagtype oefenen): '+intNiveaus[2].join(', '):''}
-${(intNiveaus[3]||[]).length?'Niveau 3 (Aanpakstrategie): '+intNiveaus[3].join(', '):''}
-
-Geef ALLEEN geldige JSON terug:
-{"patroon_inzicht":"1-2 zinnen over het opvallendste patroon","niveaus":[{"niveau":1,"label":"Stof herhalen","feedback":"concrete feedback","acties":["actie1","actie2","actie3"]}],"motivatie":"korte motiverende zin"}
-
-Regels: jij-vorm, concreet, max 3 zinnen per niveau + 3 acties, B1-taalniveau, alleen niveaus met fouten opnemen.`;
-  const response=await fetch("https://api.anthropic.com/v1/messages",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:prompt}]})
-  });
-  const data=await response.json();
-  const text=data.content.map(i=>i.text||"").join("");
-  const clean=text.replace(/```json|```/g,"").trim();
-  return JSON.parse(clean);
-}
-
-// AI feedback verwijderd
+// AI feedback functie verwijderd - was dode code
 
 // ===================== LEERLING =====================
 function renderLHome() {
