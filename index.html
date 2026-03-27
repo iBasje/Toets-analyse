@@ -2048,18 +2048,39 @@ function renderGroei() {
 
 
 // ===================== BEHEERDER =====================
-function aTab(name) {
+async function aTab(name) {
   ['gebruikers','toetsen','import','klassen','export'].forEach(n => {
     const el=document.getElementById('adt-'+n); if(el) el.style.display = n===name?'block':'none';
     const nav=document.getElementById('atab-'+n); if(nav) nav.classList.toggle('active', n===name);
   });
   const titles={gebruikers:'Gebruikers',toetsen:'Alle toetsen',import:'Leerlingen importeren',klassen:'Klassen beheren',export:'Data exporteren'};
   const tb=document.getElementById('topbar-title'); if(tb) tb.textContent=titles[name]||'Beheer';
-  if (name==='gebruikers') renderAdminGebruikers();
-  if (name==='toetsen') renderAdminToetsen();
-  if (name==='import') renderAdminImport();
-  if (name==='klassen') renderAdminKlassen();
-  if (name==='export') renderAdminExport();
+  
+  // Herlaad data voordat de specifieke tab wordt gerenderd
+  if (name === 'gebruikers') {
+    const { data: gebruikers } = await sb.from('profielen').select('*').order('aangemaakt_op', {ascending: false});
+    _alleGebruikers = gebruikers || [];
+    renderAdminGebruikers();
+  }
+  if (name === 'toetsen') {
+    const { data: toetsen } = await sb.from('toetsen').select('*').order('aangemaakt_op', {ascending: false});
+    _alleToetsen = toetsen || [];
+    const { data: resultaten } = await sb.from('resultaten').select('*, leerling:profielen(naam,klas)').order('aangemaakt_op', {ascending: false});
+    _alleResultaten = resultaten || [];
+    renderAdminToetsen();
+  }
+  if (name === 'import') renderAdminImport();
+  if (name === 'klassen') {
+    const { data: klassen } = await sb.from('klassen').select('*, docent:profielen(naam)').order('naam', {ascending: true});
+    _alleKlassen = klassen || [];
+    S.klassen = _alleKlassen;
+    renderAdminKlassen();
+  }
+  if (name === 'export') {
+    const { data: resultaten } = await sb.from('resultaten').select('*, leerling:profielen(naam,klas)').order('aangemaakt_op', {ascending: false});
+    _alleResultaten = resultaten || [];
+    renderAdminExport();
+  }
 }
 
 function startTestModus() {
@@ -2183,7 +2204,10 @@ function renderAdminGebruikers() {
       +'<td style="color:#888;font-size:12px;">'+g.email+'</td>'
       +'<td>'+(isSuperAdmin?'<span style="font-size:12px;color:var(--muted);">'+(g.klas||'-')+'</span>':'<select class="rol-select" data-uid="'+g.id+'" onchange="wijzigKlas(this)" style="min-width:80px;"><option value="">— geen —</option>'+(S.klassen||[]).map(k=>'<option value="'+k.naam+'"'+(g.klas===k.naam?' selected':'')+'>'+k.naam+'</option>').join('')+'</select>')+'</td>'
       +'<td><select class="rol-select" data-uid="'+g.id+'" onchange="wijzigRol(this)">'+rolOpts+'</select></td>'
-      +'<td><button class="btn btn-xs btn-danger" onclick="verwijderGebruiker(\''+g.id+'\',\''+g.naam.replace(/'/g,'')+'\')" '+(g.id===S.user.id?'disabled title="Kan jezelf niet verwijderen"':'')+'>Verwijder</button></td>'
+      +'<td style="white-space:nowrap;">'
+      +'<button class="btn btn-xs" style="background:var(--orange);color:#fff;margin-right:4px;" onclick="resetWachtwoord(\''+g.id+'\',\''+g.naam.replace(/'/g,'')+'\',\''+g.email.replace(/'/g,'')+'\')">Reset ww</button>'
+      +'<button class="btn btn-xs btn-danger" onclick="verwijderGebruiker(\''+g.id+'\',\''+g.naam.replace(/'/g,'')+'\')" '+(g.id===S.user.id?'disabled title="Kan jezelf niet verwijderen"':'')+'>Verwijder</button>'
+      +'</td>'
       +'</tr>';
   }).join('');
 
@@ -2245,6 +2269,34 @@ async function verwijderGebruiker(uid, naam) {
   _alleGebruikers = _alleGebruikers.filter(g => g.id !== uid);
   toast(naam + ' verwijderd');
   renderAdminGebruikers();
+}
+
+async function resetWachtwoord(uid, naam, email) {
+  if (!confirm('Wachtwoord van "'+naam+'" resetten naar "Welkom1!"?\n\nDe gebruiker kan hiermee direct inloggen.')) return;
+  
+  // Probeer via admin API (vereist service role key)
+  const { data, error } = await sb.rpc('reset_user_password', {
+    p_user_id: uid,
+    p_new_password: 'Welkom1!'
+  });
+
+  if (error) {
+    // Fallback: update via auth.admin.updateUserById (client-side, werkt alleen met juiste rechten)
+    const { error: updateErr } = await sb.auth.admin.updateUserById(uid, {
+      password: 'Welkom1!'
+    });
+
+    if (updateErr) {
+      toast('Fout: Wachtwoord reset niet mogelijk via client. Gebruik Supabase dashboard.');
+      console.error('Reset error:', updateErr);
+      return;
+    }
+  }
+
+  toast('Wachtwoord van '+naam+' is gereset naar "Welkom1!"');
+  
+  // Log de actie (optioneel)
+  console.log('Wachtwoord gereset voor:', email);
 }
 
 function renderAdminToetsen() {
@@ -2327,6 +2379,9 @@ async function verwerkImport() {
 
   log.innerHTML = '<span class="spinner"></span> Bezig met inlezen...';
 
+  // Bewaar huidige sessie om te voorkomen dat beheerder wordt uitgelogd
+  const { data: { session: currentSession } } = await sb.auth.getSession();
+
   // Read file
   const reader = new FileReader();
   reader.onload = async function(e) {
@@ -2375,38 +2430,97 @@ async function verwerkImport() {
         const email = nr + '@' + domein;
         if (!nr || !naam || !klas) { skip++; continue; }
 
-        // Invite user via Supabase admin invite
-        const { data: invData, error: invErr } = await sb.auth.admin?.inviteUserByEmail
-          ? await sb.auth.admin.inviteUserByEmail(email, { data: { naam, rol: 'leerling', klas } })
-          : { data: null, error: { message: 'Geen admin rechten' } };
-
-        if (invErr) {
-          // Fallback: maak account aan met tijdelijk wachtwoord
-          const { data: signData, error: signErr } = await sb.auth.signUp({
-            email, password: 'Welkom1!',
-            options: { data: { naam, rol: 'leerling', klas } }
+        try {
+          // Maak account aan via server-side functie (voorkomt auto-login)
+          const { data: createData, error: createErr } = await sb.rpc('create_leerling_account', {
+            p_email: email,
+            p_password: 'Welkom1!',
+            p_naam: naam,
+            p_klas: klas
           });
-          if (signErr && !signErr.message.includes('already registered')) {
-            err++;
-            log.innerHTML += '<span style="color:#9b2424;">✗ ' + email + ': ' + signErr.message + '</span><br>';
-            continue;
+
+          if (createErr) {
+            // Fallback: directe insert als RPC niet werkt
+            // Check of email al bestaat
+            const { data: existing } = await sb.from('profielen').select('id').eq('email', email).single();
+            if (existing) {
+              skip++;
+              log.innerHTML += '<span style="color:#888;">○ ' + naam + ' (' + email + ') - bestaat al</span><br>';
+              continue;
+            }
+
+            // Maak user aan via auth.admin (vereist service_role key op server)
+            // Als dat niet werkt, gebruik signUp maar log direct weer in als beheerder
+            const { data: signData, error: signErr } = await sb.auth.signUp({
+              email, 
+              password: 'Welkom1!',
+              options: { 
+                data: { naam, rol: 'leerling', klas },
+                emailRedirectTo: window.location.origin
+              }
+            });
+
+            if (signErr && !signErr.message.includes('already registered')) {
+              err++;
+              log.innerHTML += '<span style="color:#9b2424;">✗ ' + email + ': ' + signErr.message + '</span><br>';
+              continue;
+            }
+
+            if (signData?.user) {
+              // Insert profiel
+              await sb.from('profielen').upsert({ 
+                id: signData.user.id, 
+                email, 
+                naam, 
+                rol: 'leerling', 
+                klas 
+              }, { onConflict: 'id' });
+
+              // Herstel beheerder sessie direct
+              if (currentSession) {
+                await sb.auth.setSession({
+                  access_token: currentSession.access_token,
+                  refresh_token: currentSession.refresh_token
+                });
+              }
+            }
           }
-          if (signData?.user) {
-            await sb.from('profielen').upsert({ id: signData.user.id, email, naam, rol: 'leerling', klas }, { onConflict: 'id' });
-          }
-        } else if (invData?.user) {
-          await sb.from('profielen').upsert({ id: invData.user.id, email, naam, rol: 'leerling', klas }, { onConflict: 'id' });
+
+          ok++;
+          log.innerHTML += '<span style="color:#2a6020;">✓ ' + naam + ' (' + email + ') - wachtwoord: Welkom1!</span><br>';
+        } catch (e) {
+          err++;
+          log.innerHTML += '<span style="color:#9b2424;">✗ ' + naam + ': ' + e.message + '</span><br>';
         }
-        ok++;
-        log.innerHTML += '<span style="color:#2a6020;">✓ ' + naam + ' (' + email + ')</span><br>';
       }
+
       log.innerHTML += '<br><strong>' + ok + ' aangemaakt · ' + skip + ' overgeslagen · ' + err + ' fouten</strong>';
+      log.innerHTML += '<br><br><div style="background:#fff3e6;border-left:3px solid var(--orange);padding:12px;margin-top:10px;"><strong>📌 Standaard wachtwoord:</strong> Alle nieuwe leerlingen kunnen inloggen met wachtwoord <code style="background:#f5f5f5;padding:2px 6px;border-radius:4px;">Welkom1!</code><br>Zij kunnen dit zelf wijzigen in hun accountinstellingen.</div>';
+      
       if (ok > 0) {
-        _alleGebruikers = [];
-        await renderAdmin();
+        // Herlaad gebruikerslijst
+        const { data: gebruikers } = await sb.from('profielen').select('*').order('aangemaakt_op', {ascending: false});
+        _alleGebruikers = gebruikers || [];
+        renderAdminGebruikers();
+      }
+
+      // Zorg dat beheerder ingelogd blijft
+      if (currentSession) {
+        await sb.auth.setSession({
+          access_token: currentSession.access_token,
+          refresh_token: currentSession.refresh_token
+        });
       }
     } catch(e) {
       log.innerHTML = '<span style="color:#9b2424;">Fout bij inlezen: ' + e.message + '</span>';
+      
+      // Herstel sessie ook bij errors
+      if (currentSession) {
+        await sb.auth.setSession({
+          access_token: currentSession.access_token,
+          refresh_token: currentSession.refresh_token
+        });
+      }
     }
   };
   if (file.name.endsWith('.csv')) {
