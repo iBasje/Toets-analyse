@@ -2200,18 +2200,55 @@ async function wijzigKlas(select) {
 }
 
 async function verwijderGebruiker(uid, naam) {
+  console.log('🗑️ Verwijderen gestart voor:', uid, naam);
+  
   const doelGebruiker = _alleGebruikers.find(x => x.id === uid);
+  console.log('Doel gebruiker:', doelGebruiker);
+  
   if (doelGebruiker && doelGebruiker.email === 'bbe@hetstreek.nl') {
     toast('De hoofdbeheerder kan niet worden verwijderd.');
     return;
   }
-  if (!confirm('Gebruiker "'+naam+'" en alle bijbehorende data verwijderen?\nDeze actie kan niet ongedaan worden gemaakt.')) return;
-  await sb.from('resultaten').delete().eq('leerling_id', uid);
-  await sb.from('toetsen').delete().eq('docent_id', uid);
-  await sb.from('profielen').delete().eq('id', uid);
-  _alleGebruikers = _alleGebruikers.filter(g => g.id !== uid);
-  toast(naam + ' verwijderd');
-  renderAdminGebruikers();
+  
+  if (!confirm('Gebruiker "'+naam+'" en alle bijbehorende data verwijderen?\nDeze actie kan niet ongedaan worden gemaakt.')) {
+    console.log('Verwijderen geannuleerd door gebruiker');
+    return;
+  }
+  
+  try {
+    console.log('Stap 1: Verwijderen resultaten...');
+    const { error: resError } = await sb.from('resultaten').delete().eq('leerling_id', uid);
+    if (resError) console.error('Error resultaten:', resError);
+    
+    console.log('Stap 2: Verwijderen toetsen...');
+    const { error: toetsError } = await sb.from('toetsen').delete().eq('docent_id', uid);
+    if (toetsError) console.error('Error toetsen:', toetsError);
+    
+    console.log('Stap 3: Verwijderen profiel...');
+    const { error: profielError } = await sb.from('profielen').delete().eq('id', uid);
+    if (profielError) {
+      console.error('❌ Error bij verwijderen profiel:', profielError);
+      toast('Fout bij verwijderen profiel: ' + profielError.message);
+      return;
+    }
+    
+    console.log('Stap 4: Verwijderen auth account...');
+    try {
+      const { error: authError } = await sb.auth.admin.deleteUser(uid);
+      if (authError) console.log('Auth delete error (verwacht):', authError);
+    } catch(e) {
+      console.log('Auth account verwijderen gefaald (normaal):', e);
+    }
+    
+    console.log('✅ Verwijderen voltooid');
+    _alleGebruikers = _alleGebruikers.filter(g => g.id !== uid);
+    toast(naam + ' verwijderd');
+    renderAdminGebruikers();
+    
+  } catch(error) {
+    console.error('❌ Onverwachte error:', error);
+    toast('Fout bij verwijderen: ' + error.message);
+  }
 }
 
 async function resetWachtwoord(uid, naam, email) {
