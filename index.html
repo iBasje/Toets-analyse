@@ -719,6 +719,30 @@ async function init() {
   });
 }
 
+async function laadDocentData() {
+  // Laad alle data voor docent/beheerder
+  const { data: toetsen } = await sb.from('toetsen').select('*').order('aangemaakt_op', {ascending: false});
+  _alleToetsen = toetsen || [];
+  
+  const { data: gebruikers } = await sb.from('profielen').select('*').order('aangemaakt_op', {ascending: false});
+  _alleGebruikers = gebruikers || [];
+  
+  const { data: resultaten } = await sb.from('resultaten').select('*');
+  _alleResultaten = resultaten || [];
+  
+  const { data: klassen } = await sb.from('klassen').select('*').order('naam');
+  _alleKlassen = klassen || [];
+}
+
+async function laadLeerlingData() {
+  // Laad alleen data relevant voor leerling
+  const { data: toetsen } = await sb.from('toetsen').select('*').eq('gesloten', false);
+  _openToetsen = toetsen || [];
+  
+  const { data: resultaten } = await sb.from('resultaten').select('*').eq('leerling_id', S.user.id);
+  _mijnResultaten = resultaten || [];
+}
+
 async function laadProfiel(user) {
   S.user = user;
   let profiel = null;
@@ -786,10 +810,28 @@ async function laadProfiel(user) {
   renderNav();
   
   if (profiel.rol === 'beheerder' || profiel.rol === 'docent') {
-    await laadDocentData();
+    // Laad docent/beheerder data inline
+    const { data: toetsen } = await sb.from('toetsen').select('*').order('aangemaakt_op', {ascending: false});
+    _alleToetsen = toetsen || [];
+    
+    const { data: gebruikers } = await sb.from('profielen').select('*').order('aangemaakt_op', {ascending: false});
+    _alleGebruikers = gebruikers || [];
+    
+    const { data: resultaten } = await sb.from('resultaten').select('*');
+    _alleResultaten = resultaten || [];
+    
+    const { data: klassen } = await sb.from('klassen').select('*').order('naam');
+    _alleKlassen = klassen || [];
+    
     showScreen('d-home');
   } else {
-    await laadLeerlingData();
+    // Laad leerling data inline
+    const { data: toetsen } = await sb.from('toetsen').select('*').eq('gesloten', false);
+    _openToetsen = toetsen || [];
+    
+    const { data: resultaten } = await sb.from('resultaten').select('*').eq('leerling_id', S.user.id);
+    _mijnResultaten = resultaten || [];
+    
     showScreen('l-home');
   }
 }
