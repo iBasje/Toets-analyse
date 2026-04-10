@@ -266,7 +266,7 @@ body.testmodus .main-content{margin-top:40px;}
   </div>
   <div class="sidebar-section" id="snav-admin-section" style="display:none;">
     <div class="sidebar-section-label">Beheer</div>
-    <div class="sidebar-nav-item" id="snav-admin" onclick="renderAdmin();showScreen('admin');"><div class="nav-dot nav-dot-orange"></div>Beheerderspaneel</div>
+    <div class="sidebar-nav-item" id="snav-admin" onclick="openBeheerderspaneel()"><div class="nav-dot nav-dot-orange"></div>Beheerderspaneel</div>
   </div>
   <div id="sidebar-user-wrap"></div>
   <div class="sidebar-logout" onclick="uitloggen()">&#x2192; Uitloggen</div>
@@ -2027,57 +2027,6 @@ async function aTab(name) {
 }
 
 function startTestModus() {
-  // Sla huidige staat op
-  S._adminState = {
-    profiel: JSON.parse(JSON.stringify(S.profiel)),
-    toetsen: [...S.toetsen],
-    resultaten: [...S.resultaten],
-  };
-  S.testModus = true;
-  // Zet tijdelijk leerlingprofiel
-  S.profiel = {
-    id: S.profiel.id,
-    naam: S.profiel.naam + ' (test)',
-    klas: S.klassen.length ? S.klassen[0].naam : 'Testklas',
-    rol: 'leerling',
-    email: S.profiel.email,
-  };
-  // Laad alle beschikbare toetsen als leerling
-  S.toetsen = _alleToetsen.filter(t => !t.gesloten);
-  S.resultaten = [];
-  // Toon banner
-  document.getElementById('testmodus-banner').style.display = 'flex';
-  document.body.classList.add('testmodus');
-  // Update leerling sidebar user info
-  const nm = S.profiel.naam;
-  const kl = S.profiel.klas;
-  document.querySelectorAll('#sidebar-user-ll').forEach(el => {
-    el.innerHTML = '<div class="sidebar-user"><div class="sidebar-user-avatar">T</div><div><div class="sidebar-user-name">'+nm+'</div><div class="sidebar-user-role">Testmodus · '+kl+'</div></div></div>';
-  });
-  const groeiBtn = document.getElementById('snav-groei-l');
-  if(groeiBtn) groeiBtn.style.display = 'block';
-  renderLHome();
-  showScreen('l-home');
-}
-
-function stopTestModus() {
-  if (!S._adminState) return;
-  // Herstel admin staat
-  S.profiel = S._adminState.profiel;
-  S.toetsen = S._adminState.toetsen;
-  S.resultaten = S._adminState.resultaten;
-  S.testModus = false;
-  S._adminState = null;
-  // Verberg banner
-  document.getElementById('testmodus-banner').style.display = 'none';
-  document.body.classList.remove('testmodus');
-  // Terug naar admin
-  renderAdmin();
-  showScreen('admin');
-  aTab('gebruikers');
-}
-
-function startTestModus() {
   // Sla beheerderstoestand op
   S._adminBackup = {
     profiel: {...S.profiel},
@@ -2089,7 +2038,7 @@ function startTestModus() {
     ...S.profiel,
     rol: 'leerling',
     naam: S.profiel.naam + ' (testmodus)',
-    klas: null,
+    klas: (S.klassen && S.klassen.length) ? S.klassen[0].naam : 'Testklas',
     _testModus: true
   };
   S.toetsen = S._adminBackup.toetsen.filter(t => !t.gesloten);
@@ -2103,7 +2052,7 @@ function startTestModus() {
   renderNav();
 }
 
-function stopTestModus() {
+async function stopTestModus() {
   if (!S._adminBackup) return;
   S.profiel = S._adminBackup.profiel;
   S.toetsen = S._adminBackup.toetsen;
@@ -2112,9 +2061,10 @@ function stopTestModus() {
   document.getElementById('test-modus-balk').style.display = 'none';
   document.querySelectorAll('.sidebar').forEach(s => s.style.paddingTop = '');
   document.querySelectorAll('.content-topbar').forEach(c => c.style.marginTop = '');
-  renderAdmin();
-  showScreen('admin');
   renderNav();
+  await renderAdmin();
+  showScreen('admin');
+  aTab('gebruikers');
 }
 
 async function renderAdmin() {
@@ -2380,6 +2330,7 @@ function renderAdminToetsen() {
       +'<td>'+(t.vragen||[]).length+' vr · '+tot+' pt</td>'
       +'<td>'+aantalRes+' ingevuld</td>'
       +'<td>'+(t.gesloten?'<span class="gesloten-badge">Gesloten</span>':'<span class="open-badge">Open</span>')+'</td>'
+      +'<td><button class="btn btn-xs btn-danger" onclick="verwijderAdminToets(\''+t.id+'\',\''+t.naam.replace(/'/g,'')+'\')">Verwijder</button></td>'
       +'</tr>';
   }).join('');
   el.innerHTML = '<div class="card"><div class="card-title">Alle toetsen ('+_alleToetsen.length+')</div>'
@@ -2666,6 +2617,11 @@ function exportCSV() {
     res = res.filter(r => docentToetsen.includes(r.toets_id));
   }
 
+  if (!res.length) {
+    toast('Geen resultaten beschikbaar om te exporteren.');
+    return;
+  }
+
   const toetsNaam = id => _alleToetsen.find(t => t.id === id)?.naam || id;
   const docentNaam = toetsId => {
     const t = _alleToetsen.find(x => x.id === toetsId);
@@ -2707,6 +2663,18 @@ function exportCSV() {
   toast('CSV gedownload (' + (rows.length-1) + ' resultaten)');
 }
 
+
+// ===================== NAVIGATIE BEHEERDER =====================
+async function openBeheerderspaneel() {
+  await renderAdmin();
+  showScreen('admin');
+  aTab('gebruikers');
+}
+
+// ===================== UITLOGGEN =====================
+async function uitloggen() {
+  await sb.auth.signOut();
+}
 
 // ===================== EVENTS =====================
 document.addEventListener('click',function(e){
