@@ -537,16 +537,18 @@ body.testmodus .main-content{margin-top:40px;}
 <div class="main-content">
   <div class="content-topbar"><div class="content-topbar-title">Beheerdersdashboard</div><div class="content-topbar-sub">Volledig overzicht en beheer</div></div>
   <div class="content-body">
-    <div class="card" style="margin-bottom:14px;">
-      <div class="card-title">Nieuwe docent toevoegen</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end;">
-        <div><label>Naam</label><input type="text" id="nieuwe-docent-naam" placeholder="Volledige naam"></div>
-        <div><label>Email</label><input type="email" id="nieuwe-docent-email" placeholder="naam@hetstreek.nl"></div>
-        <div><label>Rol</label><select id="nieuwe-docent-rol"><option value="docent">Docent</option><option value="beheerder">Beheerder</option></select></div>
-        <button class="btn btn-primary" onclick="voegDocentToe()" style="margin-bottom:0;">+ Toevoegen</button>
+    <div id="adt-gebruikers">
+      <div class="card" style="margin-bottom:14px;">
+        <div class="card-title">Nieuwe docent toevoegen</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end;">
+          <div><label>Naam</label><input type="text" id="nieuwe-docent-naam" placeholder="Volledige naam"></div>
+          <div><label>Email</label><input type="email" id="nieuwe-docent-email" placeholder="naam@hetstreek.nl"></div>
+          <div><label>Rol</label><select id="nieuwe-docent-rol"><option value="docent">Docent</option><option value="beheerder">Beheerder</option></select></div>
+          <button class="btn btn-primary" onclick="voegDocentToe()" style="margin-bottom:0;">+ Toevoegen</button>
+        </div>
       </div>
+      <div id="admin-gebruikers"></div>
     </div>
-    <div id="adt-gebruikers"><div id="admin-gebruikers"></div></div>
     <div id="adt-toetsen" style="display:none;"><div id="admin-toetsen"></div></div>
     <div id="adt-import" style="display:none;"><div id="admin-import"></div></div>
     <div id="adt-klassen" style="display:none;"><div id="admin-klassen"></div></div>
@@ -2034,7 +2036,7 @@ function startTestModus() {
   // Sla beheerderstoestand op
   S._adminBackup = {
     profiel: {...S.profiel},
-    toetsen: [...S.toetsen],
+    toetsen: [..._alleToetsen],
     resultaten: [...S.resultaten]
   };
   // Simuleer leerlingprofiel
@@ -2045,7 +2047,7 @@ function startTestModus() {
     klas: (S.klassen && S.klassen.length) ? S.klassen[0].naam : 'Testklas',
     _testModus: true
   };
-  S.toetsen = S._adminBackup.toetsen.filter(t => !t.gesloten);
+  S.toetsen = _alleToetsen.filter(t => !t.gesloten);
   S.resultaten = [];
   // Toon testbalk
   document.getElementById('test-modus-balk').style.display = 'flex';
@@ -2170,38 +2172,43 @@ async function verwijderGebruiker(uid, naam) {
   }
   
   try {
-    console.log('Stap 1: Verwijderen resultaten...');
-    const { error: resError } = await sb.from('resultaten').delete().eq('leerling_id', uid);
-    if (resError) console.error('Error resultaten:', resError);
-    
-    console.log('Stap 2: Verwijderen toetsen...');
-    const { error: toetsError } = await sb.from('toetsen').delete().eq('docent_id', uid);
-    if (toetsError) console.error('Error toetsen:', toetsError);
-    
-    console.log('Stap 3: Verwijderen profiel...');
-    const { error: profielError } = await sb.from('profielen').delete().eq('id', uid);
-    if (profielError) {
-      console.error('❌ Error bij verwijderen profiel:', profielError);
-      toast('Fout bij verwijderen profiel: ' + profielError.message);
+    // Probeer eerst via RPC-functie (omzeilt RLS)
+    const { error: rpcError } = await sb.rpc('verwijder_gebruiker', { p_user_id: uid });
+    if (!rpcError) {
+      _alleGebruikers = _alleGebruikers.filter(g => g.id !== uid);
+      _alleResultaten = _alleResultaten.filter(r => r.leerling_id !== uid);
+      _alleToetsen = _alleToetsen.filter(t => t.docent_id !== uid);
+      toast(naam + ' verwijderd');
+      renderAdminGebruikers();
       return;
     }
-    
-    console.log('Stap 4: Verwijderen auth account...');
-    try {
-      const { error: authError } = await sb.auth.admin.deleteUser(uid);
-      if (authError) console.log('Auth delete error (verwacht):', authError);
-    } catch(e) {
-      console.log('Auth account verwijderen gefaald (normaal):', e);
+    console.warn('RPC verwijder_gebruiker niet beschikbaar, probeer directe delete:', rpcError.message);
+
+    // Fallback: directe delete stappen
+    const { error: resError } = await sb.from('resultaten').delete().eq('leerling_id', uid);
+    if (resError) console.warn('Resultaten delete fout (kan doorgaan):', resError.message);
+
+    const { error: toetsError } = await sb.from('toetsen').delete().eq('docent_id', uid);
+    if (toetsError) console.warn('Toetsen delete fout (kan doorgaan):', toetsError.message);
+
+    const { error: profielError } = await sb.from('profielen').delete().eq('id', uid);
+    if (profielError) {
+      toast('Verwijderen mislukt: ' + profielError.message + '. Controleer de Supabase RLS-rechten voor de beheerdersrol.');
+      return;
     }
-    
-    console.log('✅ Verwijderen voltooid');
+
+    // Auth-account verwijderen (vereist service role key — verwacht te mislukken)
+    try { await sb.auth.admin.deleteUser(uid); } catch(_) {}
+
     _alleGebruikers = _alleGebruikers.filter(g => g.id !== uid);
+    _alleResultaten = _alleResultaten.filter(r => r.leerling_id !== uid);
+    _alleToetsen = _alleToetsen.filter(t => t.docent_id !== uid);
     toast(naam + ' verwijderd');
     renderAdminGebruikers();
-    
+
   } catch(error) {
-    console.error('❌ Onverwachte error:', error);
-    toast('Fout bij verwijderen: ' + error.message);
+    console.error('Onverwachte fout bij verwijderen:', error);
+    toast('Onverwachte fout: ' + error.message);
   }
 }
 
@@ -2670,9 +2677,14 @@ function exportCSV() {
 
 // ===================== NAVIGATIE BEHEERDER =====================
 async function openBeheerderspaneel() {
-  await renderAdmin();
-  showScreen('admin');
-  aTab('gebruikers');
+  try {
+    await renderAdmin();
+    showScreen('admin');
+    aTab('gebruikers');
+  } catch(e) {
+    console.error('Fout bij openen beheerderspaneel:', e);
+    toast('Fout bij laden beheerderspaneel: ' + e.message);
+  }
 }
 
 // ===================== UITLOGGEN =====================
