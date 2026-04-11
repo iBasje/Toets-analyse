@@ -741,6 +741,11 @@ async function laadDocentData() {
   
   const { data: klassen } = await sb.from('klassen').select('*').order('naam');
   _alleKlassen = klassen || [];
+  S.klassen = _alleKlassen;
+  if (S.user) {
+    S.toetsen = _alleToetsen.filter(t => t.docent_id === S.user.id);
+    S.resultaten = _alleResultaten.filter(r => S.toetsen.some(t => t.id === r.toets_id));
+  }
 }
 
 async function laadLeerlingData() {
@@ -831,7 +836,11 @@ async function laadProfiel(user) {
     
     const { data: klassen } = await sb.from('klassen').select('*').order('naam');
     _alleKlassen = klassen || [];
-    
+    S.klassen = _alleKlassen;
+    S.toetsen = _alleToetsen.filter(t => t.docent_id === S.user.id);
+    S.resultaten = _alleResultaten.filter(r => S.toetsen.some(t => t.id === r.toets_id));
+
+    renderDHome();
     showScreen('d-home');
   } else {
     // Laad leerling data inline
@@ -1107,6 +1116,7 @@ async function saveToets() {
   S.temp.editId=null;
   btn.disabled=false; btn.textContent='✓ Toets opslaan';
   await laadDocentData();
+  renderDHome();
   showScreen('d-home');
 }
 
