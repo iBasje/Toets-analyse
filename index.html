@@ -2187,11 +2187,8 @@ async function verwijderGebruiker(uid, naam) {
     const { data: rpcData, error: rpcError } = await sb.rpc('verwijder_gebruiker', { p_user_id: uid });
     console.log('RPC resultaat — data:', rpcData, '| error:', rpcError);
     if (!rpcError) {
-      _alleGebruikers = _alleGebruikers.filter(g => g.id !== uid);
-      _alleResultaten = _alleResultaten.filter(r => r.leerling_id !== uid);
-      _alleToetsen = _alleToetsen.filter(t => t.docent_id !== uid);
       toast(naam + ' verwijderd');
-      renderAdminGebruikers();
+      await renderAdmin();
       return;
     }
     toast('Verwijderen mislukt: ' + rpcError.message);
