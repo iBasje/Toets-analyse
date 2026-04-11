@@ -2182,8 +2182,10 @@ async function verwijderGebruiker(uid, naam) {
   }
   
   try {
+    console.log('🔄 RPC verwijder_gebruiker aanroepen met uid:', uid);
     // Probeer eerst via RPC-functie (omzeilt RLS)
-    const { error: rpcError } = await sb.rpc('verwijder_gebruiker', { p_user_id: uid });
+    const { data: rpcData, error: rpcError } = await sb.rpc('verwijder_gebruiker', { p_user_id: uid });
+    console.log('RPC resultaat — data:', rpcData, '| error:', rpcError);
     if (!rpcError) {
       _alleGebruikers = _alleGebruikers.filter(g => g.id !== uid);
       _alleResultaten = _alleResultaten.filter(r => r.leerling_id !== uid);
@@ -2192,7 +2194,9 @@ async function verwijderGebruiker(uid, naam) {
       renderAdminGebruikers();
       return;
     }
-    console.warn('RPC verwijder_gebruiker niet beschikbaar, probeer directe delete:', rpcError.message);
+    toast('Verwijderen mislukt: ' + rpcError.message);
+    console.error('RPC verwijder_gebruiker fout:', rpcError);
+    return;
 
     // Fallback: directe delete stappen
     const { error: resError } = await sb.from('resultaten').delete().eq('leerling_id', uid);
